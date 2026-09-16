@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Check-in ส่งของ</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+:root{
+  --bg:#f4f6f9; --card:#fff; --ink:#16202e; --muted:#6b7a8d; --line:#e3e8ef;
+  --brand:#1f4fd8; --ok:#0a8f4e; --warn:#c2820a; --bad:#c62828; --radius:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,"Noto Sans Thai","Helvetica Neue",sans-serif;
+     background:var(--bg);color:var(--ink);font-size:16px;padding-bottom:90px}
+header{position:sticky;top:0;z-index:20;background:var(--brand);color:#fff;padding:12px 16px;
+       display:flex;align-items:center;gap:10px}
+header h1{font-size:17px;margin:0;flex:1;font-weight:600}
+header .sub{font-size:12px;opacity:.85}
+.back{background:rgba(255,255,255,.2);border:0;color:#fff;border-radius:8px;padding:6px 10px;font-size:14px}
+main{padding:12px}
+.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;
+      box-shadow:0 1px 3px rgba(16,24,40,.06)}
+.row{display:flex;gap:8px;align-items:center}
+.row.between{justify-content:space-between}
+.muted{color:var(--muted);font-size:13px}
+.big{font-size:19px;font-weight:700}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:10px;background:#e8ecf3;font-size:14px;font-weight:600}
+.tab.on{background:var(--brand);color:#fff}
+input,select,textarea,button{font-family:inherit;font-size:16px}
+.inp{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 5px}
+.btn{width:100%;padding:14px;border:0;border-radius:12px;background:var(--brand);color:#fff;
+     font-weight:700;font-size:16px}
+.btn:disabled{opacity:.5}
+.btn.ghost{background:#e8ecf3;color:var(--ink)}
+.btn.ok{background:var(--ok)}
+.bill{border-bottom:1px solid var(--line);padding:12px 2px;display:flex;gap:10px;align-items:center}
+.bill:last-child{border:0}
+.bill .n{font-weight:700;font-size:15px}
+.bill .amt{text-align:right;font-weight:700;white-space:nowrap}
+.pill{display:inline-block;font-size:11px;padding:3px 8px;border-radius:99px;background:#eef2f7;color:var(--muted)}
+.pill.done{background:#e3f6eb;color:var(--ok)}
+.pill.nogeo{background:#fdf3e2;color:var(--warn)}
+.pill.late{background:#fdeaea;color:var(--bad);font-weight:700}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:82px;padding:11px 8px;border:1px solid var(--line);background:#fff;
+            border-radius:10px;font-size:14px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+/* ---- ช่องกรอกยอดเงิน — แยกเงินสดกับโอนให้เห็นชัดด้วยสี ---- */
+.payf{margin-top:12px;border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
+.payf .hd{display:flex;align-items:center;gap:7px;padding:8px 12px;font-size:13.5px;font-weight:700;color:#fff}
+.payf.cash .hd{background:var(--ok)}
+.payf.tran .hd{background:#2563eb}
+.payf .bd{padding:10px 12px;background:#fff;display:flex;align-items:center;gap:8px}
+.payf input{flex:1;width:100%;border:none;outline:none;font-size:26px;font-weight:700;
+            color:var(--ink);background:transparent;padding:2px 0;-moz-appearance:textfield}
+.payf input::-webkit-outer-spin-button,.payf input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.payf .cur{font-size:14px;color:var(--muted);font-weight:600}
+.paysum{margin-top:12px;border-radius:10px;padding:10px 12px;font-size:14px;background:#f1f4f8}
+.paysum .r{display:flex;justify-content:space-between;padding:2px 0}
+.paysum .r b{font-variant-numeric:tabular-nums}
+.paynote{margin-top:12px;padding:11px 13px;border-radius:10px;background:#fdf3e2;
+         color:var(--warn);font-size:13.5px;line-height:1.5}
+.fillrest{margin-top:8px;width:100%;padding:10px;border:1px dashed var(--line);border-radius:10px;
+          background:#fff;color:var(--brand);font-weight:600;font-size:13.5px}
+.photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.ph{width:72px;height:72px;border-radius:10px;object-fit:cover;border:1px solid var(--line);position:relative}
+.phwrap{position:relative}
+.phwrap b{position:absolute;top:-6px;right:-6px;background:var(--bad);color:#fff;width:22px;height:22px;
+          border-radius:99px;font-size:13px;display:flex;align-items:center;justify-content:center}
+.addph{width:72px;height:72px;border-radius:10px;border:1.5px dashed var(--line);background:#fff;
+       display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:var(--muted)}
+.gps{display:flex;gap:8px;align-items:center;font-size:13px;padding:10px;border-radius:10px;background:#f1f4f9}
+.gps.ok{background:#e3f6eb;color:var(--ok)}
+.gps.warn{background:#fdf3e2;color:var(--warn)}
+.gps.bad{background:#fdeaea;color:var(--bad)}
+.footer{position:fixed;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+        background:rgba(255,255,255,.96);border-top:1px solid var(--line)}
+#map{height:240px;border-radius:12px;margin-top:8px}
+.toast{position:fixed;left:16px;right:16px;bottom:86px;background:#16202e;color:#fff;padding:12px 14px;
+       border-radius:12px;font-size:14px;z-index:60;opacity:0;transition:.25s;pointer-events:none}
+.toast.show{opacity:1}
+.hidden{display:none!important}
+.queue{background:#fdf3e2;color:var(--warn);padding:8px 12px;font-size:13px;text-align:center}
+.spin{width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;
+      border-radius:99px;animation:s .7s linear infinite;display:inline-block;vertical-align:-3px}
+@keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<header>
+  <button class="back hidden" id="back">‹</button>
+  <div style="flex:1">
+    <h1 id="title">งานส่งของวันนี้</h1>
+    <div class="sub" id="who">กำลังเข้าสู่ระบบ…</div>
+  </div>
+</header>
+<div class="queue hidden" id="queueBar"></div>
+<div class="queue hidden" id="bgBar" style="background:#e8eefb;color:var(--brand)"></div>
+<main id="app"><div class="card muted">กำลังโหลด…</div></main>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= ตั้งค่า ================= */
+const CONFIG = {
+  LIFF_ID : 'ใส่ LIFF ID ตรงนี้',
+  API_URL : 'ใส่ URL ของ Apps Script Web App (ลงท้าย /exec)',
+  API_KEY : 'ใส่ API_KEY ที่ได้จาก setConfig()',
+  MAX_PX      : 860,    // รูปบิล/สินค้า — แค่ดูรู้เรื่องก็พอ (ไฟล์เล็กลง = ส่งเร็วขึ้นเท่าตัว)
+  MAX_PX_SLIP : 1300,   // สลิปต้องคมกว่าเพราะระบบต้องอ่านตัวเลข — อย่าลดค่านี้
+  JPEG_Q      : 0.55,
+  JPEG_Q_SLIP : 0.72,
+  SUBMIT_WAIT_MS : 2500,  // รอคำตอบจากหลังบ้านนานสุดเท่านี้ เกินกว่านี้ปิดหน้าให้ไปร้านต่อ
+  // 'both'   = เลือกได้ทั้งถ่ายใหม่และเลือกจากอัลบั้ม (ถ่ายด้วยแอปกล้องแล้วรูปเก็บในเครื่องด้วย)
+  // 'camera' = บังคับถ่ายสดในแอปเท่านั้น รูปจะไม่ถูกเก็บลงเครื่อง
+  PHOTO_SOURCE : 'both'
+};
+
+/* ================= state ================= */
+let S = { user:null, emp:null, date:null, mine:[], pool:[], bill:null,
+          photos:[], gps:null, page:'checkin' };
+
+const $  = s => document.querySelector(s);
+const el = (h) => { const d=document.createElement('div'); d.innerHTML=h.trim(); return d.firstChild; };
+const fmt = n => Number(n||0).toLocaleString('en-US',{maximumFractionDigits:2});
+
+function toast(msg, ms=2600){ const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), ms); }
+
+/* ================= ตรวจค่า CONFIG ================= */
+// ตัดช่องว่างหัวท้ายอัตโนมัติ กันกรณีคัดลอกติดมา
+['LIFF_ID','API_URL','API_KEY'].forEach(k => { if (typeof CONFIG[k] === 'string') CONFIG[k] = CONFIG[k].trim(); });
+
+function checkConfig(){
+  const bad = [];
+  const thai = /[฀-๿]/;
+
+  if (!CONFIG.LIFF_ID || thai.test(CONFIG.LIFF_ID))
+    bad.push(['LIFF_ID', 'ยังไม่ได้ใส่ค่า — ยังเป็นข้อความตัวอย่างภาษาไทยอยู่', CONFIG.LIFF_ID]);
+  else if (!/^\d{8,12}-[0-9a-zA-Z]{6,12}$/.test(CONFIG.LIFF_ID))
+    bad.push(['LIFF_ID', 'รูปแบบไม่ถูก ต้องเป็นตัวเลข ขีด ตัวอักษร เช่น 2000123456-aBcDeFgH', CONFIG.LIFF_ID]);
+
+  if (!CONFIG.API_URL || thai.test(CONFIG.API_URL))
+    bad.push(['API_URL', 'ยังไม่ได้ใส่ค่า — ยังเป็นข้อความตัวอย่างภาษาไทยอยู่', CONFIG.API_URL]);
+  else if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(CONFIG.API_URL))
+    bad.push(['API_URL', 'ต้องขึ้นต้น https://script.google.com/macros/s/ และลงท้าย /exec (ห้ามลงท้าย /dev)', CONFIG.API_URL]);
+
+  if (!CONFIG.API_KEY || thai.test(CONFIG.API_KEY))
+    bad.push(['API_KEY', 'ยังไม่ได้ใส่ค่า — ยังเป็นข้อความตัวอย่างภาษาไทยอยู่', CONFIG.API_KEY]);
+
+  return bad;
+}
+
+function showSetupError(stage, err, extra){
+  const detail = (err && (err.message || err.code || String(err))) || 'ไม่ทราบสาเหตุ';
+  $('#app').innerHTML = `
+    <div class="card">
+      <div class="big">ตั้งค่ายังไม่ครบ</div>
+      <p class="muted">ติดที่ขั้นตอน: <b>${stage}</b></p>
+    </div>
+    ${extra || ''}
+    <div class="card">
+      <div class="muted">ข้อความจากระบบ</div>
+      <div style="font-family:monospace;font-size:13px;word-break:break-word">${detail}</div>
+    </div>
+    <div class="card">
+      <div class="muted">ค่าที่หน้านี้อ่านได้ตอนนี้</div>
+      <div style="font-family:monospace;font-size:12px;word-break:break-all;line-height:1.9">
+        LIFF_ID = ${CONFIG.LIFF_ID || '(ว่าง)'}<br>
+        API_URL = ${CONFIG.API_URL || '(ว่าง)'}<br>
+        API_KEY = ${CONFIG.API_KEY ? CONFIG.API_KEY.slice(0,4) + '••••' + CONFIG.API_KEY.slice(-4) : '(ว่าง)'}
+      </div>
+      <p class="muted" style="margin-top:8px">แก้ได้ที่ไฟล์ index.html บน GitHub ส่วน <b>const CONFIG</b> แล้วรอ 1 นาทีก่อนเปิดใหม่</p>
+    </div>`;
+}
+
+/* ================= API ================= */
+async function api(action, data={}) {
+  const body = JSON.stringify(Object.assign({action, apiKey:CONFIG.API_KEY, userId:S.user}, data));
+  let res;
+  try {
+    res = await fetch(CONFIG.API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body});
+  } catch (e) {
+    throw new Error('ติดต่อหลังบ้านไม่ได้ — ตรวจว่า Deploy เป็น Web app แบบ Who has access = Anyone แล้ว (' + e.message + ')');
+  }
+  let j;
+  try { j = await res.json(); }
+  catch (e) { throw new Error('หลังบ้านตอบกลับมาไม่ใช่ข้อมูลที่อ่านได้ — มักเกิดจาก Web App URL ผิด หรือยังไม่ได้ Deploy เวอร์ชันใหม่'); }
+  if (!j.ok && j.error) throw new Error(j.error);
+  return j;
+}
+
+/* ================= เริ่มต้น ================= */
+(async function init(){
+  let stage = 'ตรวจค่าตั้งต้น';
+  try {
+    const bad = checkConfig();
+    if (bad.length) {
+      const rows = bad.map(b => `<div class="card"><b>${b[0]}</b><p class="muted">${b[1]}</p>
+        <div style="font-family:monospace;font-size:12px;word-break:break-all;color:var(--bad)">ค่าที่ใส่ไว้: ${b[2] || '(ว่าง)'}</div></div>`).join('');
+      $('#app').innerHTML = `<div class="card"><div class="big">ตั้งค่ายังไม่ครบ</div>
+        <p class="muted">มี ${bad.length} ค่าที่ต้องแก้ในไฟล์ index.html บน GitHub ส่วน <b>const CONFIG</b></p></div>` + rows;
+      $('#who').textContent = 'ยังเปิดใช้งานไม่ได้';
+      return;
+    }
+
+    S.page = new URLSearchParams(location.search).get('p') || 'checkin';
+
+    // เร่งการเปิดหน้า: ถ้าเคยเข้าจากเครื่องนี้แล้ว ยิงขอรายการบิลไปพร้อมกับตอน LINE กำลังล็อกอิน
+    // แทนที่จะรอ LINE เสร็จก่อนค่อยเริ่มโหลด ซึ่งเสียเวลาไปเปล่าๆ ราวหนึ่งวินาที
+    let cachedUser = null;
+    try { cachedUser = localStorage.getItem('last_uid'); } catch(e) {}
+    const early = cachedUser ? api('bootstrap', {userId:cachedUser}).catch(()=>null) : null;
+
+    stage = 'เข้าสู่ระบบ LINE (liff.init)';
+    await liff.init({liffId: CONFIG.LIFF_ID});
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+
+    stage = 'อ่านโปรไฟล์ผู้ใช้ (liff.getProfile)';
+    const p = await liff.getProfile();
+    S.user = p.userId;
+    try { localStorage.setItem('last_uid', p.userId); } catch(e) {}
+
+    stage = 'ติดต่อหลังบ้าน Apps Script';
+    // ใช้ผลที่ยิงล่วงหน้าได้ถ้าเป็นคนเดียวกันจริง ไม่งั้นค่อยขอใหม่
+    let b = (cachedUser === p.userId && early) ? await early : null;
+    if (!b || !b.ok) b = await api('bootstrap');
+    if (b.needRegister) {
+      $('#app').innerHTML = `<div class="card"><div class="big">ยังไม่ได้ลงทะเบียน</div>
+        <p class="muted">กลับไปที่แชท แล้วพิมพ์<br><b>ลงทะเบียน &lt;รหัสพนักงาน&gt;</b><br>เช่น ลงทะเบียน EMP001</p></div>`;
+      $('#who').textContent = p.displayName; return;
+    }
+    S.emp = b.emp; S.date = b.date; S.mine = b.mine; S.pool = b.pool; S.stats = b.stats || {};
+    $('#who').textContent = `${b.emp.name} (${b.emp.code}${b.emp.sale_code ? ' · ' + b.emp.sale_code : ''}) · ${thDate(b.date)}`;
+
+    flushQueue();
+    if (S.page === 'collect')   return renderCollect();
+    if (S.page === 'pin')       return renderPinList();
+    if (S.page === 'import')    return renderImport();
+    renderList();
+  } catch (e) {
+    let hint = '';
+    if (stage.indexOf('liff.init') >= 0)
+      hint = `<div class="card"><b>ตรวจสองอย่างนี้</b>
+        <div class="muted">1. LIFF ID ในไฟล์ index.html ตรงกับที่สร้างไว้ใน LINE Developers<br>
+        2. Endpoint URL ของ LIFF ตรงกับ GitHub Pages URL และมี / ปิดท้ายเหมือนกัน</div></div>`;
+    if (stage.indexOf('หลังบ้าน') >= 0)
+      hint = `<div class="card"><b>ตรวจสองอย่างนี้</b>
+        <div class="muted">1. Deploy เป็น Web app แบบ Execute as = Me และ Who has access = Anyone<br>
+        2. Web App URL ลงท้าย /exec และเป็นเวอร์ชันล่าสุด (Manage deployments → New version)</div></div>`;
+    showSetupError(stage, e, hint);
+    $('#who').textContent = 'เปิดระบบไม่สำเร็จ';
+  }
+})();
+
+$('#back').onclick = () => { S.bill=null; S.photos=[]; S.gps=null;
+  $('#back').classList.add('hidden');
+  S.page==='collect' ? renderCollect() : (S.page==='pin' ? renderPinList() : renderList()); };
+
+function thDate(ymd){ const p=String(ymd).split('-'); return `${p[2]}/${p[1]}/${+p[0]+543}`; }
+
+/* ================= หน้า 1: รายการบิล ================= */
+let listTab = 'mine';
+
+function renderList(){
+  $('#title').textContent = 'งานส่งของวันนี้';
+  const mineDone = S.mine.filter(b=>b.checkin_id).length;
+  const rows = (listTab==='mine' ? S.mine : S.pool);
+
+  $('#app').innerHTML = '';
+  const st = S.stats || {};
+  const openMine = S.mine.filter(b=>!b.checkin_id);
+
+  if (!S.mine.length && S.pool.length) $('#app').appendChild(el(
+    `<div class="card"><b>บิลทั้งหมดอยู่ในแท็บ "ยังไม่มีคนรับ"</b>
+       <div class="muted">${S.emp.sale_code
+          ? 'ตอนนี้ไม่มีบิลค้างของรหัส ' + S.emp.sale_code + ' เลย'
+          : 'รหัสเซลส์ประจำตัวคุณยังว่างอยู่ในชีต Employees'} —
+       แตะแท็บขวาเพื่อเลือกบิลที่คุณรับไปส่ง บิลจะกลายเป็นของคุณเมื่อกดบันทึก check-in</div>
+     </div>`));
+
+  $('#app').appendChild(el(`
+    <div class="card">
+      <div class="row between">
+        <div><div class="muted">ค้างส่งของฉัน</div><div class="big">${openMine.length} บิล</div></div>
+        <div style="text-align:right"><div class="muted">ส่งแล้ววันนี้</div>
+          <div class="big" style="color:var(--ok)">${mineDone}</div></div>
+      </div>
+      <div class="muted" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
+        ยอดบิลที่ยังค้าง ${fmt(openMine.reduce((s,b)=>s+Number(b.net_amount||0),0))} บาท
+        ${st.late ? ` · <span style="color:var(--bad)">เลยวันที่ในบิลแล้ว ${st.late} ใบ</span>` : ''}
+        ${st.future ? ` · ล่วงหน้า ${st.future} ใบ (ยังไม่ถึงรอบส่ง)` : ''}
+      </div>
+    </div>`));
+  $('#app').appendChild(el(`
+    <div class="tabs">
+      <div class="tab ${listTab==='mine'?'on':''}" onclick="switchTab('mine')">ของฉัน (${S.mine.length})</div>
+      <div class="tab ${listTab==='pool'?'on':''}" onclick="switchTab('pool')">ยังไม่มีคนรับ (${S.pool.length})</div>
+    </div>`));
+  $('#app').appendChild(el(`<input class="inp" id="q" placeholder="ค้นหา เลขที่บิล / ชื่อร้าน" style="margin-bottom:10px">`));
+
+  const card = el('<div class="card"></div>');
+  if (!rows.length) card.appendChild(el('<div class="muted">ไม่มีรายการ</div>'));
+  rows.forEach(b => card.appendChild(billRow(b)));
+  $('#app').appendChild(card);
+
+  $('#q').oninput = e => {
+    const q = e.target.value.trim().toLowerCase();
+    [...card.children].forEach(c => {
+      if (!c.dataset.k) return;
+      c.style.display = c.dataset.k.includes(q) ? '' : 'none';
+    });
+  };
+}
+function switchTab(t){ listTab=t; renderList(); }
+
+function billRow(b){
+  const done = !!b.checkin_id;
+  const n = el(`
+    <div class="bill" data-k="${(b.doc_no+' '+b.cust_name).toLowerCase()}">
+      <div style="flex:1;min-width:0">
+        <div class="n">${b.cust_name}</div>
+        <div class="muted">${b.doc_no} · ${b.pieces} ชิ้น · ${b.n_lines} รายการ
+          ${done ? '<span class="pill done">ส่งแล้ว</span>' : ''}
+          ${b.bucket && !done ? `<span class="pill ${b.late?'late':''}">${b.bucket}</span>` : ''}
+          ${b.why ? `<span class="pill">${b.why}</span>` : ''}
+          ${!b.hasGeo && !done ? '<span class="pill nogeo">ร้านใหม่ ยังไม่มีพิกัด</span>' : ''}
+        </div>
+      </div>
+      <div class="amt">${fmt(b.net_amount)}<div class="muted" style="font-weight:400">${b.sale_code||''}</div></div>
+    </div>`);
+  if (!done) n.onclick = () => openCheckin(b);
+  else n.style.opacity = .55;
+  return n;
+}
+
+/* ================= หน้า 2: check-in ================= */
+function openCheckin(b){
+  S.bill = b; S.photos = []; S.gps = null;
+  $('#back').classList.remove('hidden');
+  $('#title').textContent = b.doc_no;
+
+  $('#app').innerHTML = `
+    <div class="card">
+      <div class="big">${b.cust_name}</div>
+      <div class="muted">${b.doc_no} · รหัสร้าน ${b.cust_code}</div>
+      <div class="row between" style="margin-top:10px">
+        <div><div class="muted">ยอดบิล</div><div class="big">${fmt(b.net_amount)}</div></div>
+        <div style="text-align:right"><div class="muted">จำนวน</div>
+          <div class="big">${b.pieces} ชิ้น</div></div>
+      </div>
+    </div>
+
+    <div class="card hidden" id="groupCard">
+      <b>ร้านนี้มีบิลค้างอยู่อีก</b>
+      <div class="muted">ถ้าทำใบวางบิลรวมแล้วลูกค้าจ่ายยอดเดียว ให้ติ๊กบิลที่รวมด้วย
+        ระบบจะเฉลี่ยเงินลงแต่ละบิลให้เอง</div>
+      <div id="groupList" style="margin-top:8px"></div>
+      <div class="row between" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+        <span class="muted">รวมต้องเก็บ</span><b id="groupTotal">—</b>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="gps" id="gpsBox"><span class="spin" style="border-color:#ccc;border-top-color:#666"></span>
+        <span>กำลังหาพิกัด…</span></div>
+      <button class="btn ghost" id="regps" style="margin-top:8px;padding:9px;font-size:14px">หาพิกัดใหม่</button>
+    </div>
+
+    <div class="card">
+      <label>สถานะการส่ง</label>
+      <div class="seg" id="segDeliv">
+        <button data-v="ส่งครบ" class="on">ส่งครบ</button>
+        <button data-v="ส่งไม่ครบ">ส่งไม่ครบ</button>
+        <button data-v="ร้านปิด">ร้านปิด</button>
+        <button data-v="ปฏิเสธรับ">ปฏิเสธรับ</button>
+      </div>
+      <div id="adjBox" class="hidden" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+        <b>ยอดใหม่หลังตัดรายการ</b>
+        <div class="muted">ตัดรายการในบิลกระดาษแล้วกรอกยอดที่แก้ไว้ ระบบจะเก็บเงินตามยอดนี้</div>
+        <input class="inp" id="adjAmt" type="number" inputmode="decimal" style="margin-top:8px"
+               placeholder="เช่น ${fmt(Math.round(Number(b.net_amount||0)*0.8))}">
+        <div class="row between" style="margin-top:8px">
+          <span class="muted">ตัดออกไป</span><b id="cutAmt">—</b>
+        </div>
+      </div>
+      <div id="closedNote" class="hidden" style="margin-top:10px;padding:10px;border-radius:8px;
+           background:#fdf3e2;color:var(--warn);font-size:13px"></div>
+    </div>
+
+    <div class="card">
+      <label>การชำระเงิน</label>
+      <div class="seg" id="segPay">
+        <button data-v="เงินสด">เงินสด</button>
+        <button data-v="โอน">โอน</button>
+        <button data-v="สด+โอน">สด+โอน</button>
+        <button data-v="ยังไม่เก็บ" class="on">ยังไม่เก็บ</button>
+      </div>
+      <div id="payFields"></div>
+      <div class="row between" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+        <span class="muted" id="unpaidLabel">คงเหลือค้างชำระ</span>
+        <b id="unpaid">${fmt(b.net_amount)}</b>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row between">
+        <div><b>เคลมโปรโมชั่น</b><div class="muted">ถ่ายรูปบิล + รูปสินค้า</div></div>
+        <button class="btn ghost" id="promoToggle" style="width:auto;padding:9px 16px">ไม่มีโปร</button>
+      </div>
+      <div id="promoBox" class="hidden">
+        <label>รูปบิล <span id="cBill" class="muted"></span></label>
+        <div class="photos" id="phBill"></div>
+        <label>รูปสินค้า <span id="cProd" class="muted"></span></label>
+        <div class="photos" id="phProd"></div>
+      </div>
+    </div>
+
+    <div class="card" id="slipCard" style="display:none">
+      <label>สลิปโอนเงิน</label>
+      <div class="muted" style="margin-bottom:6px">ถ่ายให้เห็นยอดเงิน ชื่อผู้รับ และเลขบัญชีชัดๆ ระบบจะตรวจให้เบื้องหลัง ถ้าผิดจะแจ้งในกลุ่มผู้จัดการ</div>
+      <div class="photos" id="phSlip"></div>
+      <div id="slipResult"></div>
+    </div>
+
+    <div class="card">
+      <label>หมายเหตุ (ถ้ามี)</label>
+      <textarea class="inp" id="note" rows="2" placeholder="เช่น ของขาด 2 ลัง / ร้านให้มาส่งใหม่พรุ่งนี้"></textarea>
+    </div>
+
+    <div class="footer"><button class="btn" id="submit">บันทึก Check-in</button></div>
+  `;
+
+  // ---- บิลอื่นของร้านเดียวกันที่ยังค้าง (ใบวางบิลรวม) ----
+  S.group   = [b.doc_no];
+  S.groupId = '';
+  const mates = S.mine.concat(S.pool).filter(x =>
+        x.cust_code === b.cust_code && x.doc_no !== b.doc_no && !x.checkin_id);
+
+  if (mates.length) {
+    $('#groupCard').classList.remove('hidden');
+    const list = $('#groupList');
+    list.innerHTML = '';
+    mates.forEach(m => {
+      const row = el(`<label class="row between" style="padding:9px 0;border-bottom:1px solid var(--line)">
+          <span style="flex:1;min-width:0">
+            <b style="font-weight:600">${m.doc_no}</b>
+            <div class="muted">${m.bucket || ''} · ${m.pieces} ชิ้น</div>
+          </span>
+          <b style="margin-right:10px">${fmt(m.net_amount)}</b>
+          <input type="checkbox" style="width:22px;height:22px">
+        </label>`);
+      row.querySelector('input').onchange = e => {
+        if (e.target.checked) S.group.push(m.doc_no);
+        else S.group = S.group.filter(d => d !== m.doc_no);
+        S.groupId = S.group.length > 1
+          ? (S.groupId || 'G' + Date.now().toString(36) + Math.random().toString(36).slice(2,6))
+          : '';
+        updateTarget();
+      };
+      list.appendChild(row);
+    });
+  }
+
+  getGPS();
+  $('#regps').onclick = getGPS;
+
+  // ส่งไม่ครบ = ตัดรายการหน้าร้าน จบในรอบเดียว → ต้องกรอกยอดใหม่
+  // ร้านปิด    = ยังไม่ได้ส่ง → บิลกลับเข้ารายการงานอัตโนมัติ
+  S.deliv = 'ส่งครบ';
+  segInit('#segDeliv', v => {
+    S.deliv = v;
+    $('#adjBox').classList.toggle('hidden', v !== 'ส่งไม่ครบ');
+    if (v === 'ส่งไม่ครบ' && (S.group||[]).length > 1) {
+      S.group = [S.bill.doc_no]; S.groupId = '';
+      document.querySelectorAll('#groupList input').forEach(i => i.checked = false);
+      toast('ส่งไม่ครบให้บันทึกทีละบิล ยกเลิกการรวมบิลให้แล้ว', 4000);
+    }
+    const note = $('#closedNote');
+    if (v === 'ร้านปิด') {
+      note.textContent = 'บิลนี้จะกลับเข้ารายการงาน ไปส่งใหม่ได้วันหลัง';
+      note.classList.remove('hidden');
+    } else if (v === 'ปฏิเสธรับ') {
+      note.textContent = 'ปิดงานบิลนี้ ยอดที่ต้องเก็บเป็น 0 และนับเป็นยอดที่ส่งไม่ได้';
+      note.classList.remove('hidden');
+    } else { note.classList.add('hidden'); }
+    updateTarget();
+  });
+  $('#adjAmt').oninput = updateTarget;
+
+  segInit('#segPay', onPayChange);
+  onPayChange('ยังไม่เก็บ');
+
+  let promo = false;
+  $('#promoToggle').onclick = () => {
+    promo = !promo;
+    $('#promoToggle').textContent = promo ? 'มีโปร ✓' : 'ไม่มีโปร';
+    $('#promoToggle').className = promo ? 'btn ok' : 'btn ghost';
+    $('#promoToggle').style.width='auto'; $('#promoToggle').style.padding='9px 16px';
+    $('#promoBox').classList.toggle('hidden', !promo);
+    S.promo = promo;
+    renderPhotos();
+  };
+  S.promo = false;
+  renderPhotos();
+  $('#submit').onclick = submitCheckin;
+}
+
+function segInit(sel, cb){
+  const box = $(sel);
+  box.querySelectorAll('button').forEach(b => b.onclick = () => {
+    box.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); cb(b.dataset.v);
+  });
+}
+function segVal(sel){ const b=$(sel).querySelector('button.on'); return b?b.dataset.v:''; }
+
+/** ยอดที่ต้องเก็บจริง — เปลี่ยนตามสถานะการส่ง */
+function groupBills(){
+  const all = S.mine.concat(S.pool);
+  return (S.group || [S.bill.doc_no]).map(d =>
+    d === S.bill.doc_no ? S.bill : all.find(x => x.doc_no === d)).filter(Boolean);
+}
+
+function targetAmount(){
+  if (S.deliv === 'ร้านปิด' || S.deliv === 'ปฏิเสธรับ') return 0;
+  if (S.deliv === 'ส่งไม่ครบ') return Number(($('#adjAmt')||{}).value||0);
+  return groupBills().reduce((s,b)=>s+Number(b.net_amount||0), 0);
+}
+
+function updateTarget(){
+  const gt = $('#groupTotal');
+  if (gt) {
+    const n = (S.group||[]).length;
+    gt.textContent = n > 1 ? fmt(targetAmount()) + ' บาท (' + n + ' บิล)' : fmt(targetAmount()) + ' บาท';
+  }
+  const orig = Number(S.bill.net_amount||0);
+  const cut = $('#cutAmt');
+  if (cut) {
+    const c = Math.max(0, orig - targetAmount());
+    cut.textContent = S.deliv === 'ส่งไม่ครบ' && targetAmount() ? fmt(c) + ' บาท' : '—';
+    cut.style.color = c > 0 ? 'var(--warn)' : 'var(--muted)';
+  }
+  onPayChange(segVal('#segPay'));
+}
+
+/* ================= ช่องกรอกยอดเงิน (ใช้ร่วมกันทั้งหน้า check-in และหน้ารับเงินย้อนหลัง) ====
+   กติกาเดียวกันทั้งสองหน้า กันกรอกผิดช่อง:
+   • โหมดไหน มีเฉพาะช่องของโหมดนั้น — ไม่มีช่องที่ไม่ได้ใช้ค้างอยู่บนจอ
+   • สลับโหมด ยอดย้ายตามทันที ค่าเก่าถูกล้างเสมอ
+   • เงินสดพื้นเขียว โอนพื้นน้ำเงิน ดูแวบเดียวก็รู้ว่ากรอกช่องไหนอยู่
+   • สด+โอน: พิมพ์เงินสดแล้วช่องโอนเติมส่วนที่เหลือให้เอง
+   ============================================================================== */
+
+var PAY = {box:'', mode:'', target:0, cashTouched:false, tranTouched:false, onChange:null};
+
+function payField(id, label, cls, val){
+  return `<div class="payf ${cls}">
+    <div class="hd"><span>${label}</span></div>
+    <div class="bd"><input id="${id}" type="number" inputmode="decimal" step="0.01"
+         placeholder="0" value="${val === '' ? '' : val}"><span class="cur">บาท</span></div>
+  </div>`;
+}
+
+/** วาดช่องกรอกใหม่ทั้งหมดตามโหมดที่เลือก */
+function renderPay(boxSel, mode, target, onChange){
+  const box = $(boxSel); if (!box) return;
+  const modeChanged = (PAY.box !== boxSel) || (PAY.mode !== mode) || !box.querySelector('#paySum');
+
+  PAY.box = boxSel; PAY.target = Number(target||0);
+  if (onChange !== undefined) PAY.onChange = onChange;
+
+  // เปลี่ยนแค่ยอดที่ต้องเก็บ (เช่นกำลังพิมพ์ยอดใหม่ตอนส่งไม่ครบ) — อย่าวาดใหม่ทั้งก้อน
+  // ไม่งั้นโฟกัสจะกระโดดออกจากช่องที่พิมพ์อยู่
+  if (!modeChanged) {
+    if (!PAY.cashTouched && mode === 'เงินสด' && $('#cash')) $('#cash').value = PAY.target || '';
+    if (!PAY.tranTouched && mode === 'โอน'    && $('#tran')) $('#tran').value = PAY.target || '';
+    calcUnpaid();
+    return;
+  }
+
+  PAY.mode = mode; PAY.cashTouched = false; PAY.tranTouched = false;
+  const t = PAY.target;
+  let html = '';
+
+  if (mode === 'ยังไม่เก็บ') {
+    html = `<div class="paynote">ยังไม่เก็บเงินบิลนี้<br>
+      ยอด <b>${fmt(t)}</b> บาท จะขึ้นเป็นค้างชำระ ตามเก็บทีหลังได้จากเมนู
+      “บันทึกรับเงินย้อนหลัง”</div>`;
+  } else {
+    const both = (mode === 'สด+โอน');
+    if (mode === 'เงินสด') html += payField('cash','💵 รับเป็นเงินสด','cash', t);
+    if (mode === 'โอน')    html += payField('tran','💳 ลูกค้าโอนเข้าบัญชี','tran', t);
+    if (both) {
+      html += payField('cash','💵 ส่วนที่รับเป็นเงินสด','cash', '');
+      html += payField('tran','💳 ส่วนที่ลูกค้าโอน','tran', '');
+      html += `<button type="button" class="fillrest" id="fillRest">
+                 ใส่ส่วนที่เหลือลงช่องโอนให้อัตโนมัติ</button>`;
+    }
+  }
+  html += `<div class="paysum" id="paySum"></div>`;
+  box.innerHTML = html;
+
+  const c = $('#cash'), tr = $('#tran');
+  if (c)  c.oninput  = () => { PAY.cashTouched = true;
+                               if (PAY.mode==='สด+โอน' && !PAY.tranTouched) autoFillTran();
+                               calcUnpaid(); };
+  if (tr) tr.oninput = () => { PAY.tranTouched = true; calcUnpaid(); };
+  const fr = $('#fillRest');
+  if (fr) fr.onclick = () => { PAY.tranTouched = false; autoFillTran(); calcUnpaid(); };
+
+  // เฉพาะโหมดสด+โอน ที่ต้องพิมพ์เองแน่ๆ ถึงจะเด้งคีย์บอร์ดให้
+  // โหมดเดียวเราเติมยอดเต็มให้แล้ว ถ้าเด้งคีย์บอร์ดจะบังจอเปล่าๆ
+  if (mode === 'สด+โอน' && $('#cash')) { try { $('#cash').focus(); } catch(e){} }
+
+  const slip = $('#slipCard');
+  if (slip) slip.style.display = (mode==='โอน'||mode==='สด+โอน') ? '' : 'none';
+  calcUnpaid();
+}
+
+function autoFillTran(){
+  const tr = $('#tran'); if (!tr) return;
+  const c    = Number(($('#cash')||{}).value||0);
+  const rest = Math.round((PAY.target - c) * 100) / 100;
+  tr.value = rest > 0 ? rest : '';
+}
+
+function payValues(){
+  return {cash: Number(($('#cash')||{}).value||0),
+          tran: Number(($('#tran')||{}).value||0)};
+}
+
+function calcUnpaid(){
+  const t = PAY.target;
+  const v = payValues();
+  const paid = Math.round((v.cash + v.tran) * 100) / 100;
+  const diff = Math.round((paid - t) * 100) / 100;
+
+  const sum = $('#paySum');
+  if (sum) {
+    const state = Math.abs(diff) <= 1
+      ? ['ครบพอดี', 'var(--ok)']
+      : diff > 1 ? ['รับเกิน ' + fmt(diff), 'var(--brand)']
+                 : ['ยังขาด ' + fmt(-diff), 'var(--warn)'];
+    sum.innerHTML =
+      `<div class="r"><span class="muted">ยอดที่ต้องเก็บ</span><b>${fmt(t)}</b></div>` +
+      (PAY.mode === 'ยังไม่เก็บ' ? '' :
+        `<div class="r"><span class="muted">รับมาแล้ว</span><b>${fmt(paid)}</b></div>
+         <div class="r" style="border-top:1px solid var(--line);margin-top:4px;padding-top:6px">
+           <span class="muted">ผลต่าง</span><b style="color:${state[1]}">${state[0]}</b></div>`);
+  }
+
+  // แถบคงเหลือด้านล่างการ์ด (มีเฉพาะหน้า check-in)
+  const u = $('#unpaid');
+  if (u) {
+    const left = Math.max(0, -diff);
+    u.textContent = fmt(left);
+    u.style.color = left > 1 ? 'var(--warn)' : 'var(--ok)';
+    const lbl = $('#unpaidLabel');
+    if (lbl) lbl.textContent = S.deliv === 'ส่งครบ' ? 'คงเหลือค้างชำระ'
+                             : 'คงเหลือค้างชำระ (จากยอด ' + fmt(t) + ')';
+  }
+  if (PAY.onChange) PAY.onChange(v, t);
+}
+
+/** เรียกตอนเปลี่ยนโหมดในหน้า check-in */
+function onPayChange(v){ renderPay('#payFields', v, targetAmount()); }
+
+/* ---------- GPS ---------- */
+function getGPS(){
+  const box = $('#gpsBox');
+  box.className = 'gps';
+  box.innerHTML = '<span class="spin" style="border-color:#ccc;border-top-color:#666"></span><span>กำลังหาพิกัด…</span>';
+  if (!navigator.geolocation) { box.className='gps bad'; box.textContent='เครื่องนี้ไม่รองรับ GPS'; return; }
+  navigator.geolocation.getCurrentPosition(
+    p => {
+      S.gps = {lat:p.coords.latitude, lng:p.coords.longitude, acc:p.coords.accuracy, t:Date.now()};
+      const a = Math.round(p.coords.accuracy);
+      box.className = 'gps ' + (a<=50 ? 'ok' : a<=200 ? 'warn' : 'bad');
+      box.innerHTML = `<span>📍</span><span>ได้พิกัดแล้ว · แม่นยำ ±${a} ม.${a>200?' (แนะนำให้ออกมาที่โล่งแล้วกดหาใหม่)':''}</span>`;
+    },
+    e => { S.gps=null; box.className='gps bad';
+           box.innerHTML = '<span>⚠️</span><span>หาพิกัดไม่ได้: '+e.message+' — เปิด Location ให้ LINE แล้วลองใหม่</span>'; },
+    {enableHighAccuracy:true, timeout:15000, maximumAge:0}
+  );
+}
+
+/* ---------- รูป ---------- */
+function renderPhotos(){
+  [['bill','#phBill','#cBill'],['product','#phProd','#cProd'],['slip','#phSlip',null]].forEach(([type,sel,cnt])=>{
+    const box = $(sel); if (!box) return;
+    const list = S.photos.filter(p=>p.type===type);
+    box.innerHTML = '';
+    list.forEach((p,i)=>{
+      if (!p.thumb) {      // ยังบีบอัดไม่เสร็จ — ขึ้นช่องว่างให้เห็นทันทีว่ารับรูปแล้ว
+        box.appendChild(el(`<div class="phwrap" style="display:flex;align-items:center;justify-content:center;
+            background:#f0f0f0;border-radius:10px"><span class="spin"
+            style="border-color:#ccc;border-top-color:#666"></span></div>`));
+        return;
+      }
+      const w = el(`<div class="phwrap"><img class="ph" src="${p.thumb}"
+          style="${p.photoId ? '' : 'opacity:.7'}"><b>×</b></div>`);
+      w.querySelector('b').onclick = () => { S.photos.splice(S.photos.indexOf(p),1); renderPhotos(); };
+      box.appendChild(w);
+    });
+    const capture = CONFIG.PHOTO_SOURCE === 'camera' ? ' capture="environment"' : '';
+    const add = el(`<label class="addph"><span style="font-size:22px">＋</span>เพิ่มรูป
+        <input type="file" accept="image/*"${capture} class="hidden"></label>`);
+    add.querySelector('input').onchange = e => addPhoto(e.target.files[0], type);
+    box.appendChild(add);
+    if (cnt) $(cnt).textContent = list.length ? `(${list.length} รูป)` : '(ต้องมีอย่างน้อย 1 รูป)';
+  });
+}
+
+/**
+ * รับรูปเข้ามา — ไม่มีขั้นตอนไหนที่พนักงานต้องยืนรอ
+ *   1) ขึ้นช่องรูปทันที
+ *   2) บีบอัดแบบไม่ค้างหน้าจอ
+ *   3) โยนเข้าคิวส่งเบื้องหลัง แล้วปล่อยให้กดบันทึกต่อได้เลย
+ * รูปผูกกับบิลด้วยเลขที่เอกสารอยู่แล้ว จะขึ้นถึง Drive ช้ากว่านิดหน่อยก็ไม่มีผล
+ */
+async function addPhoto(file, type){
+  if (!file) return;
+
+  const p = {photoId:null, type, thumb:null, ageMin:0};
+  S.photos.push(p);
+  renderPhotos();
+
+  let dataUrl;
+  try { dataUrl = await compress(file, type); }
+  catch(e){
+    const i = S.photos.indexOf(p); if (i >= 0) S.photos.splice(i,1);
+    renderPhotos();
+    return toast('อ่านไฟล์รูปไม่ได้ ลองถ่ายใหม่', 3500);
+  }
+  if (S.photos.indexOf(p) < 0) return;      // พนักงานลบทิ้งไปก่อนบีบอัดเสร็จ
+
+  // อายุของรูป — ถ่ายสดจะเกือบ 0 ถ้าเลือกรูปเก่าจากอัลบั้มจะสูง แล้วระบบจะติดธงให้ผู้จัดการเห็น
+  p.thumb  = dataUrl;
+  p.ageMin = file.lastModified ? Math.max(0, Math.round((Date.now() - file.lastModified)/60000)) : 0;
+  p.queued = true;
+  renderPhotos();
+
+  bgQueue.add({
+    doc_no:S.bill.doc_no, groupId:S.groupId || '', date:S.date,
+    type:p.type, dataUrl:p.thumb, ageMin:p.ageMin,
+    cust_code:S.bill.cust_code, cust_name:S.bill.cust_name
+  });
+}
+
+async function compress(file, type){
+  const maxPx = type==='slip' ? CONFIG.MAX_PX_SLIP : CONFIG.MAX_PX;
+  const q     = type==='slip' ? CONFIG.JPEG_Q_SLIP : CONFIG.JPEG_Q;
+
+  const img = await loadImg(file);
+  const sc  = Math.min(1, maxPx/Math.max(img.width, img.height));
+  const c   = document.createElement('canvas');
+  c.width   = Math.round(img.width*sc);
+  c.height  = Math.round(img.height*sc);
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingQuality = 'medium';
+  ctx.drawImage(img, 0, 0, c.width, c.height);
+  if (img.__url) URL.revokeObjectURL(img.__url);
+  return await toDataUrl(c, q);
+}
+
+function loadImg(file){
+  return new Promise((res, rej)=>{
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.__url = url;
+    img.onload  = ()=> res(img);
+    img.onerror = ()=> { URL.revokeObjectURL(url); rej(new Error('decode')); };
+    img.src = url;
+  });
+}
+
+/** toDataURL บีบอัดอยู่บนเธรดหน้าจอ รูปใหญ่ๆ ทำให้จอค้างครึ่งวินาที
+ *  toBlob ทำงานนอกเธรด หน้าจอจึงยังลื่นระหว่างบีบอัด */
+function toDataUrl(c, q){
+  return new Promise(res=>{
+    if (!c.toBlob) return res(c.toDataURL('image/jpeg', q));
+    c.toBlob(b=>{
+      if (!b) return res(c.toDataURL('image/jpeg', q));
+      const fr = new FileReader();
+      fr.onload  = ()=> res(fr.result);
+      fr.onerror = ()=> res(c.toDataURL('image/jpeg', q));
+      fr.readAsDataURL(b);
+    }, 'image/jpeg', q);
+  });
+}
+
+/* ---------- ส่ง ---------- */
+async function submitCheckin(){
+  const deliv = segVal('#segDeliv'), pay = segVal('#segPay');
+  const pv   = payValues(), cash = pv.cash, tran = pv.tran;
+  const adj  = Number(($('#adjAmt')||{}).value||0);
+
+  if (deliv === 'ส่งไม่ครบ') {
+    if (!adj) return toast('ส่งไม่ครบ ต้องกรอกยอดใหม่หลังตัดรายการ', 3500);
+    if (adj > Number(S.bill.net_amount||0) + 1) return toast('ยอดใหม่มากกว่ายอดบิลเดิม', 3500);
+  }
+  if (!S.gps && !confirm('ยังไม่มีพิกัด GPS — บันทึกต่อโดยไม่มีพิกัดหรือไม่?')) return;
+  if (S.promo) {
+    if (!S.photos.some(p=>p.type==='bill'))    return toast('เคลมโปร ต้องมีรูปบิลอย่างน้อย 1 รูป', 3500);
+    if (!S.photos.some(p=>p.type==='product')) return toast('เคลมโปร ต้องมีรูปสินค้าอย่างน้อย 1 รูป', 3500);
+  }
+  if (tran > 0 && !S.photos.some(p=>p.type==='slip'))
+    if (!confirm('มียอดโอนแต่ยังไม่ได้แนบสลิป — บันทึกต่อหรือไม่?')) return;
+
+  const btn = $('#submit'); btn.disabled = true;
+
+  // รูปเข้าคิวส่งตั้งแต่ตอนถ่ายแล้ว ตรงนี้เก็บตกเฉพาะใบที่ยังไม่ได้เข้าคิว
+  S.photos.filter(p => p.thumb && !p.photoId && !p.queued).forEach(p => {
+    p.queued = true;
+    bgQueue.add({
+      doc_no:S.bill.doc_no, groupId:S.groupId || '', date:S.date,
+      type:p.type, dataUrl:p.thumb, ageMin:p.ageMin,
+      cust_code:S.bill.cust_code, cust_name:S.bill.cust_name
+    });
+  });
+
+  const payload = {
+    doc_no:S.bill.doc_no, docNos:S.group || [S.bill.doc_no], groupId:S.groupId || '',
+    date:S.date,
+    lat:S.gps?S.gps.lat:'', lng:S.gps?S.gps.lng:'', accuracy:S.gps?S.gps.acc:0,
+    deliveryStatus:deliv, adjustedAmount:adj,
+    needRevisit: deliv === 'ร้านปิด',        // ร้านปิดเท่านั้นที่ต้องกลับไปใหม่
+    payMethod:pay, cash, transfer:tran, hasPromo:!!S.promo,
+    photos:S.photos.map(p=>({photoId:p.photoId, type:p.type, ageMin:p.ageMin})),
+    note:$('#note').value.trim(), deviceTime:new Date().toISOString()
+  };
+
+  btn.innerHTML = '<span class="spin"></span> กำลังบันทึก…';
+
+  const docs = S.group || [S.bill.doc_no];
+  const mark = v => docs.forEach(dn => {
+    const t = S.mine.concat(S.pool).find(x => x.doc_no === dn);
+    if (t) t.checkin_id = v;
+  });
+
+  let settled = false;
+  const req = api('submit', payload);
+
+  req.then(r => {
+    settled = true;
+    mark(r.checkinId);
+    toast((r.bills > 1 ? '✅ บันทึกแล้ว ' + r.bills + ' บิล' : '✅ บันทึกแล้ว') +
+          (r.flags && r.flags.length ? ' (มีข้อสังเกต)' : ''));
+  }).catch(e => {
+    settled = true;
+    mark('');                                   // เอาบิลกลับเข้ารายการค้างส่ง
+    const msg = String(e && e.message || e);
+    if (/ติดต่อหลังบ้านไม่ได้|Failed to fetch|NetworkError|Load failed|timed out/i.test(msg)) {
+      queueOffline(payload);                    // เก็บรูปติดไปด้วย จะได้ส่งได้ครบตอนเน็ตกลับมา
+      toast('เน็ตไม่พอ — เก็บไว้ในคิว จะส่งให้อัตโนมัติเมื่อเน็ตกลับมา', 5000);
+    } else {
+      toast('⚠️ บันทึกไม่สำเร็จ: ' + msg, 7000);   // เช่น บิลถูกปิดงานไปแล้ว — ห้ามส่งซ้ำเอง
+    }
+    if (S.page === 'checkin' && !S.bill) renderList();   // อย่าทับหน้าจอถ้าเปิดบิลใบใหม่ไปแล้ว
+  });
+
+  // ไม่ให้ยืนรอเซิร์ฟเวอร์จนจบ — เกินเวลานี้ถือว่ารับเรื่องแล้ว ปิดหน้าให้ไปร้านต่อได้
+  // ถ้าผลจริงออกมาไม่สำเร็จ ระบบจะเตือนและดึงบิลกลับเข้ารายการให้เอง
+  await Promise.race([req.catch(()=>null), new Promise(r => setTimeout(r, CONFIG.SUBMIT_WAIT_MS))]);
+
+  btn.disabled = false; btn.textContent = 'บันทึก Check-in';
+  if (!settled) { mark('รอยืนยัน'); toast('⏳ ส่งข้อมูลแล้ว — ไปร้านต่อได้เลย', 4000); }
+  setTimeout(()=>$('#back').onclick(), settled ? 700 : 150);
+}
+
+/* ---------- คิว offline ---------- */
+/* ---------- คิวอัปโหลดรูปเบื้องหลัง ----------
+   พนักงานกดบันทึกแล้วเดินไปร้านต่อได้เลย รูปที่ยังไม่ขึ้นจะทยอยส่งเอง
+   เก็บลงเครื่องด้วย ถ้าปิดแอปไปแล้วเปิดใหม่ก็ส่งต่อจากเดิม */
+const bgQueue = {
+  KEY: 'photo_bg_v1',
+  running: 0,
+  LANES: 2,                 // ส่งพร้อมกันสองสาย เน็ตมือถือรับไหวและเร็วกว่าส่งทีละใบเกือบเท่าตัว
+  items(){ try { return JSON.parse(localStorage.getItem(this.KEY)||'[]'); } catch(e){ return []; } },
+  save(a){
+    try { localStorage.setItem(this.KEY, JSON.stringify(a)); }
+    catch(e){ toast('พื้นที่ในเครื่องเต็ม รูปบางส่วนอาจไม่ถูกส่ง', 5000); }
+    this.paint();
+  },
+  add(item){
+    item.k = 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+    const a = this.items(); a.push(item); this.save(a);
+    this.run();
+  },
+  take(){                   // หยิบงานถัดไปที่ยังไม่มีสายไหนจับ
+    const a = this.items();
+    for (const it of a) if (!this.busy[it.k]) { this.busy[it.k] = true; return it; }
+    return null;
+  },
+  done(k){
+    delete this.busy[k];
+    this.save(this.items().filter(x => x.k !== k));
+  },
+  busy: {},
+  run(){
+    while (this.running < this.LANES) {
+      const it = this.take();
+      if (!it) return;
+      this.running++;
+      this.lane(it);
+    }
+  },
+  async lane(it){
+    try {
+      await api('uploadPhoto', it);
+      this.done(it.k);
+      this.running--;
+      this.run();                                   // ต่อใบถัดไปทันที
+    } catch(e){
+      delete this.busy[it.k];                       // เน็ตยังไม่มา เก็บไว้ลองรอบหน้า
+      this.running--;
+      this.paint();
+      setTimeout(()=> this.run(), 15000);
+    }
+  },
+  paint(){
+    const n = this.items().length, bar = $('#bgBar');
+    if (!bar) return;
+    bar.classList.toggle('hidden', !n);
+    if (n) bar.textContent = `📤 กำลังส่งรูปเบื้องหลัง ${n} รูป — ทำงานต่อได้เลย`;
+    bar.onclick = () => this.run();
+  }
+};
+window.addEventListener('online', ()=> bgQueue.run());
+
+const QKEY = 'checkin_queue_v1';
+function readQ(){ try { return JSON.parse(localStorage.getItem(QKEY)||'[]'); } catch(e){ return []; } }
+function writeQ(q){
+  try { localStorage.setItem(QKEY, JSON.stringify(q)); }
+  catch(e){
+    // เต็มพื้นที่ — ทิ้งรูปในคิวเก่าสุดออกก่อน ดีกว่าเสียทั้งรายการ
+    const slim = q.map(x => Object.assign({}, x, {photos:(x.photos||[]).map(p=>({photoId:p.photoId,type:p.type,ageMin:p.ageMin}))}));
+    try { localStorage.setItem(QKEY, JSON.stringify(slim)); toast('พื้นที่เก็บในเครื่องเต็ม — เก็บข้อมูลไว้ได้แต่รูปบางส่วนหาย', 5000); }
+    catch(e2){ toast('เก็บคิวไม่ได้ พื้นที่ในเครื่องเต็ม', 5000); }
+  }
+}
+/** เก็บ check-in ที่ส่งไม่ผ่านไว้ลองใหม่
+ *  ไม่ต้องแบกรูปมาด้วยแล้ว เพราะรูปอยู่ในคิวเบื้องหลัง (bgQueue) ซึ่งเก็บลงเครื่องอยู่แล้ว
+ *  ช่วยให้พื้นที่ในเครื่องไม่เต็ม และไม่ส่งรูปเดิมซ้ำสองทาง */
+function queueOffline(p){
+  const slim = Object.assign({}, p, {
+    photos:(p.photos||[]).map(x=>({photoId:x.photoId, type:x.type, ageMin:x.ageMin}))
+  });
+  const q = readQ(); q.push(slim); writeQ(q); showQueue();
+}
+
+function showQueue(){
+  const q = readQ();
+  const bar = $('#queueBar');
+  bar.classList.toggle('hidden', !q.length);
+  if (q.length) bar.textContent = `⏳ ค้างส่ง ${q.length} รายการ — จะส่งอัตโนมัติเมื่อเน็ตกลับมา (แตะเพื่อลองใหม่)`;
+  bar.onclick = flushQueue;
+}
+
+async function flushQueue(){
+  let q = readQ();
+  if (!q.length) { showQueue(); return; }
+  const rest = [];
+  for (const item of q) {
+    try {
+      // อัปโหลดรูปที่ยังไม่มี photoId ก่อน แล้วค่อยส่ง check-in
+      for (const p of (item.photos||[])) {
+        if (p.photoId || !p.thumb) continue;
+        const r = await api('uploadPhoto', {doc_no:item.doc_no, type:p.type, dataUrl:p.thumb, date:item.date});
+        p.photoId = r.photoId;
+      }
+      await api('submit', Object.assign({}, item,
+        {photos:(item.photos||[]).map(p=>({photoId:p.photoId, type:p.type, ageMin:p.ageMin}))}));
+    } catch(e){ rest.push(item); }
+  }
+  writeQ(rest); showQueue();
+  if (q.length !== rest.length) toast(`ส่งรายการค้างสำเร็จ ${q.length-rest.length} รายการ`);
+}
+window.addEventListener('online', flushQueue);
+
+/* ================= หน้า: บันทึกรับเงินย้อนหลัง ================= */
+async function renderCollect(){
+  $('#title').textContent = 'บันทึกรับเงินย้อนหลัง';
+  $('#back').classList.add('hidden');
+  $('#app').innerHTML = '<div class="card muted">กำลังโหลดบิลค้างชำระ…</div>';
+  const r = await api('outstanding', {});
+  if (!r.items.length) { $('#app').innerHTML='<div class="card">ไม่มีบิลค้างชำระ 👍</div>'; return; }
+
+  $('#app').innerHTML = '';
+  $('#app').appendChild(el(`<div class="card">
+      <b>บิลค้างชำระ ${r.total} ใบ</b>
+      <div class="muted">ของคุณ ${r.mineCount} ใบ ขึ้นก่อน — ส่วนที่เหลือเป็นของคนอื่น
+        ค้นหาเจอได้ทุกใบ เผื่อลูกค้าส่งสลิปมาให้คุณแทน</div>
+    </div>`));
+  $('#app').appendChild(el(`<input class="inp" id="q2" placeholder="ค้นหา เลขที่บิล / ชื่อร้าน" style="margin-bottom:10px">`));
+  const card = el('<div class="card"></div>');
+  r.items.forEach(i=>{
+    const n = el(`<div class="bill" data-k="${(i.doc_no+' '+i.cust_name).toLowerCase()}">
+      <div style="flex:1;min-width:0"><div class="n">${i.cust_name}</div>
+        <div class="muted">${i.doc_no} · ${thDate(i.bill_date)} · ${i.status}
+          ${i.mine ? '<span class="pill">ของคุณ</span>'
+                   : (i.by ? `<span class="pill">ส่งโดย ${i.by}</span>` : '')}</div></div>
+      <div class="amt" style="color:var(--warn)">${fmt(i.outstanding)}</div></div>`);
+    n.onclick = ()=>openCollect(i);
+    card.appendChild(n);
+  });
+  $('#app').appendChild(card);
+  $('#q2').oninput = e=>{ const q=e.target.value.toLowerCase();
+    [...card.children].forEach(c=>c.style.display = c.dataset.k.includes(q)?'':'none'); };
+}
+
+function openCollect(i){
+  S.bill = {doc_no:i.doc_no, cust_name:i.cust_name, cust_code:i.cust_code, net_amount:i.outstanding};
+  S.photos = []; S.gps = null; S.deliv = undefined;
+  $('#back').classList.remove('hidden'); $('#title').textContent = i.doc_no;
+  $('#app').innerHTML = `
+    <div class="card"><div class="big">${i.cust_name}</div>
+      <div class="muted">${i.doc_no} · บิลวันที่ ${thDate(i.bill_date)}</div>
+      <div class="row between" style="margin-top:10px">
+        <div><div class="muted">ยอดบิล</div><div class="big">${fmt(i.net)}</div></div>
+        <div style="text-align:right"><div class="muted">ค้างอยู่</div>
+          <div class="big" style="color:var(--warn)">${fmt(i.outstanding)}</div></div></div></div>
+    <div class="card">
+      <label>รับเป็น</label>
+      <div class="seg" id="segPay2">
+        <button data-v="เงินสด" class="on">เงินสด</button>
+        <button data-v="โอน">โอน</button><button data-v="สด+โอน">สด+โอน</button></div>
+      <div id="payFields2"></div>
+    </div>
+    <div class="card" id="slipCard">
+      <label>สลิปโอนเงิน</label>
+      <div class="muted" style="margin-bottom:6px">ระบบจะตรวจสลิปให้เบื้องหลัง ไม่ต้องรอ</div>
+      <div class="photos" id="phSlip"></div>
+    </div>
+    <div class="card">
+      <label>หมายเหตุ</label><textarea class="inp" id="note" rows="2"></textarea>
+    </div>
+    <div class="footer"><button class="btn ok" id="submit2">บันทึกรับเงิน</button></div>`;
+
+  segInit('#segPay2', v => renderPay('#payFields2', v, i.outstanding));
+  renderPay('#payFields2', 'เงินสด', i.outstanding);
+  renderPhotos();
+  $('#submit2').onclick = async ()=>{
+    const btn=$('#submit2'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> กำลังบันทึก…';
+    const v = payValues();
+    if (v.cash + v.tran <= 0) { btn.disabled=false; btn.textContent='บันทึกรับเงิน';
+      return toast('ยังไม่ได้กรอกยอดที่รับมา', 3000); }
+    if (v.cash + v.tran > Number(i.outstanding||0) + 1 &&
+        !confirm('ยอดที่กรอก ' + fmt(v.cash+v.tran) + ' มากกว่ายอดค้าง ' + fmt(i.outstanding) +
+                 '\nบันทึกต่อหรือไม่?')) { btn.disabled=false; btn.textContent='บันทึกรับเงิน'; return; }
+    try {
+      await api('collect', {doc_no:i.doc_no, payMethod:segVal('#segPay2'),
+        cash:v.cash, transfer:v.tran,
+        photos:S.photos.map(p=>({photoId:p.photoId, type:p.type})),
+        note:$('#note').value.trim(), deviceTime:new Date().toISOString()});
+      toast('✅ บันทึกรับเงินแล้ว'); setTimeout(renderCollect, 800);
+    } catch(e){ toast('ไม่สำเร็จ: '+e.message,4000); }
+    finally{ btn.disabled=false; btn.textContent='บันทึกรับเงิน'; }
+  };
+}
+
+/* ================= หน้า: นำเข้าไฟล์บิล (ออฟฟิศ/ผู้จัดการ) ================= */
+function renderImport(){
+  $('#title').textContent = 'นำเข้าไฟล์บิล';
+  $('#back').classList.add('hidden');
+  $('#app').innerHTML = `
+    <div class="card">
+      <div class="big">อัปโหลดไฟล์ใบขายเชื่อ</div>
+      <div class="muted">เลือกไฟล์ CSV ที่ export จาก ERP ได้เลย ระบบจะนำเข้าทันที
+        ไม่ต้องเปิด Google Drive หรือ Apps Script</div>
+      <label class="btn" style="display:block;text-align:center;margin-top:14px">
+        เลือกไฟล์ CSV
+        <input type="file" accept=".csv,text/csv" id="csvFile" class="hidden">
+      </label>
+      <div id="impResult" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <b>ข้อควรรู้</b>
+      <div class="muted">
+        • บิลที่เลขที่เอกสารซ้ำกับที่มีอยู่แล้ว ระบบจะข้ามให้อัตโนมัติ อัปซ้ำได้ไม่เสียหาย<br>
+        • อัปไฟล์จาก ERP ตรงๆ อย่าเปิดแก้ใน Excel แล้วเซฟทับ ชื่อร้านจะเพี้ยน<br>
+        • ไฟล์ต้นฉบับถูกเก็บไว้ในโฟลเดอร์ Bills Imported เป็นหลักฐาน
+      </div>
+    </div>`;
+
+  $('#csvFile').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const box = $('#impResult');
+    box.innerHTML = '<span class="spin" style="border-color:#ccc;border-top-color:#666"></span> กำลังนำเข้า…';
+    try {
+      const dataB64 = await fileToB64(f);
+      const r = await api('importCsv', {fileName:f.name, dataB64});
+      box.innerHTML = `<div style="background:var(--ok);color:#fff;padding:12px;border-radius:10px">
+        ✅ นำเข้าสำเร็จ ${r.imported} บิล${r.imported===0?' (ทุกบิลในไฟล์มีอยู่แล้ว)':''}</div>`;
+      toast('นำเข้าเรียบร้อย');
+    } catch(err){
+      box.innerHTML = `<div style="background:var(--bad);color:#fff;padding:12px;border-radius:10px">
+        ${err.message}</div>`;
+    }
+    e.target.value = '';
+  };
+}
+
+function fileToB64(file){
+  return new Promise((res, rej)=>{
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+/* ================= หน้า: ปักหมุดร้าน ================= */
+/** โหลดไลบรารีแผนที่เฉพาะตอนเปิดหน้าปักหมุด — หน้าอื่นจะได้ไม่ต้องรอ */
+function loadLeaflet(){
+  if (window.L) return Promise.resolve();
+  if (window.__leafletP) return window.__leafletP;
+  window.__leafletP = new Promise((res, rej)=>{
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.appendChild(css);
+    const js = document.createElement('script');
+    js.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    js.onload = res; js.onerror = rej;
+    document.head.appendChild(js);
+  });
+  return window.__leafletP;
+}
+
+function renderPinList(){
+  $('#title').textContent = 'ปักหมุดร้าน';
+  $('#back').classList.add('hidden');
+  const all = S.mine.concat(S.pool);
+  const noGeo = all.filter(b=>!b.hasGeo);
+  $('#app').innerHTML = `<div class="card"><b>ร้านที่ยังไม่มีพิกัด ${noGeo.length} ร้าน</b>
+    <div class="muted">ยืนอยู่หน้าร้าน แล้วกดปักหมุด — หรือลากหมุดบนแผนที่ให้ตรงตำแหน่ง</div></div>`;
+  const card = el('<div class="card"></div>');
+  (noGeo.length ? noGeo : all).forEach(b=>{
+    const n = el(`<div class="bill"><div style="flex:1"><div class="n">${b.cust_name}</div>
+      <div class="muted">${b.cust_code} ${b.hasGeo?'<span class="pill done">มีพิกัดแล้ว</span>':''}</div></div>
+      <div class="amt">›</div></div>`);
+    n.onclick = ()=>openPin(b); card.appendChild(n);
+  });
+  $('#app').appendChild(card);
+}
+
+function openPin(b){
+  $('#back').classList.remove('hidden'); $('#title').textContent = 'ปักหมุด: ' + b.cust_name;
+  $('#app').innerHTML = `<div class="card"><div class="big">${b.cust_name}</div>
+      <div class="muted">${b.cust_code}</div>
+      <div class="gps" id="gpsBox">กำลังหาพิกัด…</div>
+      <div id="map"></div>
+      <div class="muted" style="margin-top:6px">ลากหมุดให้ตรงตำแหน่งหน้าร้านได้</div>
+      <label>หมายเหตุ (เช่น ปากซอย / ตรงข้ามปั๊ม)</label>
+      <input class="inp" id="note">
+    </div>
+    <div class="footer"><button class="btn ok" id="pinSave" disabled>บันทึกพิกัดร้านนี้</button></div>`;
+
+  let map, marker;
+  loadLeaflet().catch(()=>{});
+  navigator.geolocation.getCurrentPosition(async p=>{
+    try { await loadLeaflet(); } catch(e){ $('#gpsBox').textContent='โหลดแผนที่ไม่ได้ แต่ปักหมุดจากตำแหน่งปัจจุบันได้'; }
+    const lat=p.coords.latitude, lng=p.coords.longitude;
+    S.gps = {lat, lng, acc:p.coords.accuracy};
+    $('#gpsBox').className = 'gps ok';
+    $('#gpsBox').textContent = `📍 ±${Math.round(p.coords.accuracy)} ม.`;
+    if (window.L) {
+      map = L.map('map').setView([lat,lng], 18);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+      marker = L.marker([lat,lng], {draggable:true}).addTo(map);
+      marker.on('dragend', ()=>{ const ll=marker.getLatLng(); S.gps.lat=ll.lat; S.gps.lng=ll.lng; });
+    } else {
+      $('#map').style.display = 'none';
+    }
+    $('#pinSave').disabled = false;
+  }, e=>{ $('#gpsBox').className='gps bad'; $('#gpsBox').textContent='หาพิกัดไม่ได้: '+e.message; },
+     {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+
+  $('#pinSave').onclick = async ()=>{
+    try {
+      await api('pinStore', {cust_code:b.cust_code, cust_name:b.cust_name,
+        lat:S.gps.lat, lng:S.gps.lng, note:$('#note').value.trim()});
+      b.hasGeo = true; toast('✅ บันทึกพิกัดร้านแล้ว'); setTimeout(renderPinList, 800);
+    } catch(e){ toast('ไม่สำเร็จ: '+e.message, 4000); }
+  };
+}
+</script>
+</body>
+</html>
